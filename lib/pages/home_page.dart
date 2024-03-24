@@ -26,12 +26,11 @@ class _HomePageState extends State<HomePage> {
           actions: [
             ElevatedButton(
                 onPressed: () {
-                if(docId == null){
-                  firestoreServices.addNote(textController.text);
-                }
-                else{
-                  firestoreServices.updateNote(docId, textController.text);
-                }
+                  if (docId == null) {
+                    firestoreServices.addNote(textController.text);
+                  } else {
+                    firestoreServices.updateNote(docId, textController.text);
+                  }
 
                   textController.clear();
                   Navigator.pop(context);
@@ -49,56 +48,68 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blueAccent,
-          title: const Center(child: Text("My Notes")),
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.blueAccent,
-          onPressed: openNoteBox,
-          child: const Icon(Icons.add),
-        ),
-        body: StreamBuilder(
-            stream: firestoreServices.getNotesStream(),
-            builder: ((context, snapshot) {
-              if (snapshot.hasData) {
-                // extract list of document from snapshot
-                // docs property contains list of QueryDocumentSnapshot' objects represents the firestore collections
-                List notesList = snapshot.data!.docs;
-                return ListView.builder(
-                  // no of documents in the Firestore collections
-                  itemCount: notesList.length,
-                  // specifies a callback function that is called for each item in the list
-                  itemBuilder: (context, index) {
-                    // Retrives the DocumentSnapshot object representing the document at the current indes
-                    DocumentSnapshot document = notesList[index];
-                    // extract the id of the current document
-                    String docID = document.id;
+      appBar: AppBar(
+        backgroundColor: Colors.blueAccent,
+        title: const Center(child: Text("My Notes")),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blueAccent,
+        onPressed: openNoteBox,
+        child: const Icon(Icons.add),
+      ),
+      body: StreamBuilder(
+        stream: firestoreServices.getNotesStream(),
+        builder: ((context, snapshot) {
+          if (snapshot.hasData) {
+            // extract list of document from snapshot
+            // docs property contains list of QueryDocumentSnapshot' objects represents the firestore collections
+            List notesList = snapshot.data!.docs;
+            return ListView.builder(
+              // no of documents in the Firestore collections
+              itemCount: notesList.length,
+              // specifies a callback function that is called for each item in the list
+              itemBuilder: (context, index) {
+                // Retrives the DocumentSnapshot object representing the document at the current indes
+                DocumentSnapshot document = notesList[index];
+                // extract the id of the current document
+                String docID = document.id;
 
-                    // get note from each individual doc
-                    // retrives the data stored in the current document as  Map<String, dynamic>
-                    Map<String, dynamic> data =
-                        document.data() as Map<String, dynamic>;
-                    // we only need the note text value of the key note
-                    String noteText = data['note'];
-                    return Column(
-                      children: [
-                        ListTile(
-                            title: Text(noteText),
-                            trailing: IconButton(
-                              onPressed: () => openNoteBox(docId:docID ),
+                // get note from each individual doc
+                // retrives the data stored in the current document as  Map<String, dynamic>
+                Map<String, dynamic> data =
+                    document.data() as Map<String, dynamic>;
+                // we only need the note text value of the key note
+                String noteText = data['note'];
+                return Column(
+                  children: [
+                    ListTile(
+                        title: Text(noteText),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () => openNoteBox(docId: docID),
                               icon: const Icon(Icons.settings),
-                            )),
-                        const Divider(
-                          height: 8.0,
-                        )
-                      ],
-                    );
-                  },
+                            ),
+                            IconButton(
+                              onPressed: () =>
+                                  firestoreServices.deleteNote(docID),
+                              icon: const Icon(Icons.delete),
+                            ),
+                          ],
+                        )),
+                    const Divider(
+                      height: 8.0,
+                    )
+                  ],
                 );
-              } else {
-                return const Text("No notes avaliable");
-              }
-            })));
+              },
+            );
+          } else {
+            return const Text("No notes avaliable");
+          }
+        }),
+      ),
+    );
   }
 }
